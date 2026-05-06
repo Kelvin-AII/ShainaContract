@@ -4,87 +4,105 @@ async function loadTemplate() {
 }
 
 function renderTemplate(template, data) {
-  return template.replace(/{{(.*?)}}/g, (_, key) => {
-    return data[key.trim()] || "";
-  });
+  return template.replace(/{{(.*?)}}/g, (_, key) => data[key.trim()] || "");
 }
 
-// 🔥 中文日期 → yyyy-mm-dd
 function formatDate(str) {
-  if (!str) return "";
-
-  const match = str.match(/(\d{4})\D*(\d{1,2})\D*(\d{1,2})/);
-  if (!match) return "";
-
-  const y = match[1];
-  const m = match[2].padStart(2, '0');
-  const d = match[3].padStart(2, '0');
-
-  return `${y}-${m}-${d}`;
+  const m = str.match(/(\d{4})\D*(\d{1,2})\D*(\d{1,2})/);
+  if (!m) return "";
+  return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
 }
 
-// 🔥 核心解析函数
+// 🔥 修复后的解析
 function parseInput() {
   const text = document.getElementById("rawInput").value;
 
-  const getValue = (label) => {
-    const regex = new RegExp(label + "[:：]?\\s*([^\\n]+)");
-    const match = text.match(regex);
-    return match ? match[1].trim() : "";
+  const get = (label) => {
+    const r = new RegExp(label + "[:：]?\\s*([^\\n]+)");
+    const m = text.match(r);
+    return m ? m[1].trim() : "";
   };
 
-  document.getElementById("address").value = getValue("居住地址");
+  document.getElementById("address").value = get("居住地址");
+  document.getElementById("checkin").value = formatDate(get("入住日期"));
+  document.getElementById("checkout").value = formatDate(get("退房日期"));
+  document.getElementById("signDate").value = formatDate(get("签约日期"));
+  document.getElementById("rent").value = get("每月租金");
+  document.getElementById("name").value = get("姓名");
 
-  document.getElementById("checkin").value =
-    formatDate(getValue("入住日期"));
-
-  document.getElementById("checkout").value =
-    formatDate(getValue("退房日期"));
-
-  document.getElementById("signDate").value =
-    formatDate(getValue("签约日期"));
-
-  document.getElementById("rent").value =
-    getValue("每月租金");
-
-  document.getElementById("name").value =
-    getValue("姓名");
-
+  // ✅ 修复点
   document.getElementById("idNumber").value =
-    getValue("证件号|证件号码");
+    get("(证件号|证件号码|證件號碼)");
 }
 
-// PDF 生成
+// 日期工具
+function addMonths(date, m) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + m);
+  return d.toISOString().slice(0,10);
+}
+
+function addDays(date, d) {
+  const t = new Date(date);
+  t.setDate(t.getDate() + d);
+  return t.toISOString().slice(0,10);
+}
+
+// 🔥 核心计算
+function calculate() {
+
+  const checkin = document.getElementById("checkin").value;
+  const checkout = document.getElementById("checkout").value;
+  const sign = document.getElementById("signDate").value;
+  const rent = Number(document.getElementById("rent").value || 0);
+
+  // 居住时期
+  document.getElementById("period").value = `${checkin} 至 ${checkout}`;
+
+  // 保证金
+  document.getElementById("deposit").value = rent * 2;
+
+  // 保证金截止
+  document.getElementById("depositDeadline").value = sign;
+
+  // 第一期截止（提前14天，如果早于签约，则-3天）
+  let p1 = addDays(sign, -14);
+  if (p1 < sign) {
+    p1 = addDays(sign, -3);
+  }
+
+  document.getElementById("p1Date").value = p1;
+  document.getElementById("p2Date").value = addMonths(p1, 3);
+  document.getElementById("p3Date").value = addMonths(p1, 6);
+  document.getElementById("p4Date").value = addMonths(p1, 9);
+
+  // 租金
+  document.getElementById("p1Rent").value = rent * 3;
+  document.getElementById("p2Rent").value = rent * 3;
+  document.getElementById("p3Rent").value = rent * 3;
+  document.getElementById("p4Rent").value = rent * 3;
+}
+
 async function generatePDF() {
 
-  const data = {
-    address: document.getElementById("address").value,
-    checkin: document.getElementById("checkin").value,
-    checkout: document.getElementById("checkout").value,
-    signDate: document.getElementById("signDate").value,
-    rent: document.getElementById("rent").value,
-    name: document.getElementById("name").value,
-    idNumber: document.getElementById("idNumber").value
-  };
+  const ids = [
+    "address","checkin","checkout","signDate","rent","name","idNumber",
+    "period","deposit","depositDeadline",
+    "p1Date","p2Date","p3Date","p4Date",
+    "p1Rent","p2Rent","p3Rent","p4Rent"
+  ];
+
+  const data = {};
+  ids.forEach(id => data[id] = document.getElementById(id).value);
 
   const template = await loadTemplate();
   const html = renderTemplate(template, data);
 
-  const container = document.createElement("div");
-  container.innerHTML = html;
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  document.body.appendChild(div);
 
-  document.body.appendChild(container);
-
-  html2pdf()
-    .from(container)
-    .set({
-      margin: 15,
-      filename: "lease_contract.pdf",
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "mm", format: "a4" }
-    })
-    .save()
-    .then(() => {
-      document.body.removeChild(container);
-    });
+  html2pdf().from(div).save().then(()=>{
+    document.body.removeChild(div);
+  });
 }
