@@ -28,8 +28,7 @@ function parseInput() {
   document.getElementById("signDate").value = formatDate(get("签约日期"));
   document.getElementById("rent").value = get("每月租金");
   document.getElementById("name").value = get("姓名");
-  document.getElementById("idNumber").value =
-    get("(证件号|证件号码|證件號碼)");
+  document.getElementById("idNumber").value = get("證件號碼");
 
   calculate();
 }
