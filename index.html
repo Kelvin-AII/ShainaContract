@@ -11,7 +11,7 @@
     body {
       font-family: Arial, "Noto Sans SC";
       padding: 20px;
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
     }
 
@@ -19,7 +19,6 @@
       width: 100%;
       height: 120px;
       padding: 10px;
-      margin-bottom: 10px;
     }
 
     table {
@@ -42,8 +41,6 @@
       margin-top: 10px;
       padding: 10px;
       width: 100%;
-      font-size: 16px;
-      cursor: pointer;
     }
   </style>
 </head>
@@ -52,49 +49,39 @@
 
 <h2>智能识别输入</h2>
 
-<textarea id="rawInput" placeholder="粘贴信息，例如：
-居住地址: AAA
-入住日期(x年x月x日):2026 年 1 月 1 日
-退房日期(x年x月x日):2026 年 5 月 1 日
-签约日期(x年x月x日):2026 年 1 月 1 日
-每月租金:5000
-姓名:AAA
-证件号码:BBB
-"></textarea>
-
+<textarea id="rawInput"></textarea>
 <button onclick="parseInput()">自动识别并填充</button>
 
-<h2>合同信息填写</h2>
+<h2>基础信息</h2>
 
 <table>
-  <tr>
-    <td>居住地址</td>
-    <td><input id="address"></td>
-  </tr>
-  <tr>
-    <td>入住日期</td>
-    <td><input id="checkin" type="date"></td>
-  </tr>
-  <tr>
-    <td>退房日期</td>
-    <td><input id="checkout" type="date"></td>
-  </tr>
-  <tr>
-    <td>签约日期</td>
-    <td><input id="signDate" type="date"></td>
-  </tr>
-  <tr>
-    <td>每月租金</td>
-    <td><input id="rent"></td>
-  </tr>
-  <tr>
-    <td>姓名</td>
-    <td><input id="name"></td>
-  </tr>
-  <tr>
-    <td>证件号码</td>
-    <td><input id="idNumber"></td>
-  </tr>
+<tr><td>居住地址</td><td><input id="address"></td></tr>
+<tr><td>入住日期</td><td><input id="checkin" type="date"></td></tr>
+<tr><td>退房日期</td><td><input id="checkout" type="date"></td></tr>
+<tr><td>签约日期</td><td><input id="signDate" type="date"></td></tr>
+<tr><td>每月租金</td><td><input id="rent"></td></tr>
+<tr><td>姓名</td><td><input id="name"></td></tr>
+<tr><td>證件號碼</td><td><input id="idNumber"></td></tr>
+</table>
+
+<button onclick="calculate()">计算</button>
+
+<h2>自动计算信息</h2>
+
+<table>
+<tr><td>居住时期</td><td><input id="period"></td></tr>
+<tr><td>保证金</td><td><input id="deposit"></td></tr>
+<tr><td>保证金支付截止日期</td><td><input id="depositDeadline"></td></tr>
+
+<tr><td>第一期截止</td><td><input id="p1Date"></td></tr>
+<tr><td>第二期截止</td><td><input id="p2Date"></td></tr>
+<tr><td>第三期截止</td><td><input id="p3Date"></td></tr>
+<tr><td>第四期截止</td><td><input id="p4Date"></td></tr>
+
+<tr><td>第一期租金</td><td><input id="p1Rent"></td></tr>
+<tr><td>第二期租金</td><td><input id="p2Rent"></td></tr>
+<tr><td>第三期租金</td><td><input id="p3Rent"></td></tr>
+<tr><td>第四期租金</td><td><input id="p4Rent"></td></tr>
 </table>
 
 <button onclick="generatePDF()">生成合同 PDF</button>
