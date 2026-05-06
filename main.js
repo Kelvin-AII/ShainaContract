@@ -13,7 +13,7 @@ function formatDate(str) {
   return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
 }
 
-// 🔥 修复后的解析
+// ===== 自动解析 =====
 function parseInput() {
   const text = document.getElementById("rawInput").value;
 
@@ -29,13 +29,13 @@ function parseInput() {
   document.getElementById("signDate").value = formatDate(get("签约日期"));
   document.getElementById("rent").value = get("每月租金");
   document.getElementById("name").value = get("姓名");
-
-  // ✅ 修复点
   document.getElementById("idNumber").value =
     get("(证件号|证件号码|證件號碼)");
+
+  calculate(); // 🔥 自动触发
 }
 
-// 日期工具
+// ===== 日期工具 =====
 function addMonths(date, m) {
   const d = new Date(date);
   d.setMonth(d.getMonth() + m);
@@ -48,7 +48,7 @@ function addDays(date, d) {
   return t.toISOString().slice(0,10);
 }
 
-// 🔥 核心计算
+// ===== 自动计算（防空版）=====
 function calculate() {
 
   const checkin = document.getElementById("checkin").value;
@@ -56,16 +56,13 @@ function calculate() {
   const sign = document.getElementById("signDate").value;
   const rent = Number(document.getElementById("rent").value || 0);
 
-  // 居住时期
+  // ❗关键：数据不完整时不计算
+  if (!checkin || !checkout || !sign || !rent) return;
+
   document.getElementById("period").value = `${checkin} 至 ${checkout}`;
-
-  // 保证金
   document.getElementById("deposit").value = rent * 2;
-
-  // 保证金截止
   document.getElementById("depositDeadline").value = sign;
 
-  // 第一期截止（提前14天，如果早于签约，则-3天）
   let p1 = addDays(sign, -14);
   if (p1 < sign) {
     p1 = addDays(sign, -3);
@@ -76,13 +73,26 @@ function calculate() {
   document.getElementById("p3Date").value = addMonths(p1, 6);
   document.getElementById("p4Date").value = addMonths(p1, 9);
 
-  // 租金
   document.getElementById("p1Rent").value = rent * 3;
   document.getElementById("p2Rent").value = rent * 3;
   document.getElementById("p3Rent").value = rent * 3;
   document.getElementById("p4Rent").value = rent * 3;
 }
 
+// ===== 🔥 自动监听（核心）=====
+function setupAutoCalc() {
+  const ids = ["checkin", "checkout", "signDate", "rent"];
+
+  ids.forEach(id => {
+    document.getElementById(id).addEventListener("input", calculate);
+  });
+
+  calculate(); // 页面加载时也算一次
+}
+
+window.addEventListener("DOMContentLoaded", setupAutoCalc);
+
+// ===== PDF =====
 async function generatePDF() {
 
   const ids = [
