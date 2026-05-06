@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>房屋租赁合同生成器</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script defer src="main.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, "Noto Sans SC";
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 5px;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>智能识别输入</h2>
+
+<textarea id="rawInput" placeholder="粘贴信息，例如：
+居住地址: AAA
+入住日期(x年x月x日):2026 年 1 月 1 日
+退房日期(x年x月x日):2026 年 5 月 1 日
+签约日期(x年x月x日):2026 年 1 月 1 日
+每月租金:5000
+姓名:AAA
+证件号码:BBB
+"></textarea>
+
+<button onclick="parseInput()">自动识别并填充</button>
+
+<h2>合同信息填写</h2>
+
+<table>
+  <tr>
+    <td>居住地址</td>
+    <td><input id="address"></td>
+  </tr>
+  <tr>
+    <td>入住日期</td>
+    <td><input id="checkin" type="date"></td>
+  </tr>
+  <tr>
+    <td>退房日期</td>
+    <td><input id="checkout" type="date"></td>
+  </tr>
+  <tr>
+    <td>签约日期</td>
+    <td><input id="signDate" type="date"></td>
+  </tr>
+  <tr>
+    <td>每月租金</td>
+    <td><input id="rent"></td>
+  </tr>
+  <tr>
+    <td>姓名</td>
+    <td><input id="name"></td>
+  </tr>
+  <tr>
+    <td>证件号码</td>
+    <td><input id="idNumber"></td>
+  </tr>
+</table>
+
+<button onclick="generatePDF()">生成合同 PDF</button>
+
+</body>
+</html>
