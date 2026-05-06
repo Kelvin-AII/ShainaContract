@@ -21,6 +21,15 @@
       padding: 10px;
     }
 
+    .example {
+      background: #f5f5f5;
+      padding: 10px;
+      border: 1px dashed #aaa;
+      margin-bottom: 10px;
+      white-space: pre-line;
+      font-size: 14px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -48,6 +57,18 @@
 <body>
 
 <h2>智能识别输入</h2>
+
+<div class="example">
+示例（可直接复制）：
+
+居住地址: 东京XX公寓101  
+入住日期: 2026 年 1 月 1 日  
+退房日期: 2026 年 5 月 1 日  
+签约日期: 2026 年 1 月 1 日  
+每月租金: 5000  
+姓名: 张三  
+证件号码: A12345678
+</div>
 
 <textarea id="rawInput"></textarea>
 <button onclick="parseInput()">自动识别并填充</button>
