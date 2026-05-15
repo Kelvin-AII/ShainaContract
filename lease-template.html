@@ -6,16 +6,17 @@
   <title>许可协议</title>
   <style>
     /*
-      PDF 排版重点：
-      1. 不使用 100vh / flex / absolute 去控制正文位置，避免第一页上方大面积空白。
-      2. 不给长条款设置 page-break-inside: avoid，避免浏览器把整段推到下一页导致空白。
-      3. 使用 @page 控制 PDF 页边距；使用 fixed 边框让每一页都有合同边界。
-      4. 所有内容 overflow: visible，避免最后一页内容被截断。
+      Safari / Chrome 通用 PDF 排版重点：
+      1. 不使用 100vh、flex、absolute 控制正文位置，避免第一页上方大空白。
+      2. 不给长条款设置固定高度或 overflow:hidden，避免最后一页内容被截断。
+      3. 页边距由 @page + body padding 双保险控制，Safari 打印时更稳定。
+      4. 左右边界线放在 .contract 上；即使 Safari 对 fixed 元素支持不一致，也能显示边界。
     */
 
     @page {
+      /* Safari 对 size:A4 支持不如 Chrome 稳定；保留 A4，但实际纸张请在打印窗口选 A4。 */
       size: A4;
-      margin: 16mm 17mm 17mm 17mm;
+      margin: 12mm;
     }
 
     * {
@@ -28,19 +29,24 @@
       padding: 0;
       background: #ffffff;
       color: #111111;
-      font-family: "Noto Sans CJK TC", "Noto Sans CJK SC", "PingFang TC", "PingFang SC", "Microsoft JhengHei", "Microsoft YaHei", Arial, sans-serif;
+      font-family: "PingFang TC", "PingFang SC", "Hiragino Sans GB", "Heiti TC", "Microsoft JhengHei", "Microsoft YaHei", Arial, sans-serif;
       font-size: 11pt;
       line-height: 1.55;
-      overflow: visible;
+      overflow: visible !important;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
 
-    /* 每一页的边界线。Chrome / Puppeteer / Playwright 打印 PDF 时会重复显示。 */
+    /*
+      Chrome/Puppeteer 通常会每页重复 fixed 边框；
+      Safari 若不重复，也有 .contract 的左右边界作为 fallback。
+    */
     .page-border {
       position: fixed;
-      top: 8mm;
-      right: 8mm;
-      bottom: 8mm;
-      left: 8mm;
+      top: 7mm;
+      right: 7mm;
+      bottom: 7mm;
+      left: 7mm;
       border: 1px solid #222222;
       pointer-events: none;
       z-index: 9999;
@@ -50,12 +56,16 @@
       width: 100%;
       max-width: 100%;
       margin: 0;
-      padding: 0;
-      overflow: visible;
+      padding: 0 7mm;
+      overflow: visible !important;
+      border-left: 1px solid #222222;
+      border-right: 1px solid #222222;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
     }
 
     h1 {
-      margin: 0 0 8mm 0;
+      margin: 0 0 7mm 0;
       padding: 0;
       text-align: center;
       font-size: 18pt;
@@ -65,7 +75,7 @@
     }
 
     p {
-      margin: 0 0 3.2mm 0;
+      margin: 0 0 3mm 0;
       padding: 0;
       orphans: 2;
       widows: 2;
@@ -83,12 +93,12 @@
     }
 
     .info-table td {
-      padding: 1.4mm 0;
+      padding: 1.2mm 0;
       vertical-align: top;
       border: none;
       line-height: 1.45;
       word-break: break-word;
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
     }
 
     .info-label {
@@ -105,7 +115,7 @@
 
     .clause {
       display: block;
-      margin: 0 0 3.2mm 0;
+      margin: 0 0 3mm 0;
       padding: 0;
       page-break-inside: auto;
       break-inside: auto;
@@ -123,7 +133,7 @@
     .clause-text {
       display: inline;
       word-break: break-word;
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
       text-align: justify;
       text-justify: inter-ideograph;
     }
@@ -154,7 +164,7 @@
       padding: 0 7mm 0 0;
       line-height: 1.55;
       word-break: break-word;
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
     }
 
     .signature-table td + td {
@@ -170,12 +180,22 @@
       height: 0;
     }
 
-    /* 打印时强制使用准确尺寸和颜色 */
+    @media screen {
+      body {
+        padding: 12mm;
+      }
+    }
+
     @media print {
       html,
       body {
-        width: 210mm;
-        min-height: 297mm;
+        width: auto !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
       }
@@ -185,8 +205,17 @@
         max-height: none !important;
         overflow: visible !important;
       }
+
+      table,
+      tr,
+      td,
+      p,
+      div {
+        max-height: none !important;
+        overflow: visible !important;
+      }
     }
-  </style>
+</style>
 </head>
 <body>
   <div class="page-border"></div>
