@@ -1,116 +1,6 @@
-async function loadTemplate() {
-  const res = await fetch("./lease-template.html");
-  if (!res.ok) {
-    throw new Error("模板加载失败，请确认 lease-template.html 和 index.html 在同一目录");
-  }
-  return await res.text();
-}
-
-function renderTemplate(template, data) {
-  return template.replace(/#(.*?)#/g, (_, key) => data[key.trim()] || "");
-}
-
-function formatDate(str) {
-  const m = String(str || "").match(/(\d{4})\D*(\d{1,2})\D*(\d{1,2})/);
-  if (!m) return "";
-  return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
-}
-
-function parseInput() {
-  const text = document.getElementById("rawInput").value;
-
-  const get = (label) => {
-    const r = new RegExp(label + "[:：]?\\s*([^\\n]+)");
-    const m = text.match(r);
-    return m ? m[1].trim() : "";
-  };
-
-  document.getElementById("address").value = get("居住地址");
-  document.getElementById("checkin").value = formatDate(get("入住日期"));
-  document.getElementById("checkout").value = formatDate(get("退房日期"));
-  document.getElementById("signDate").value = formatDate(get("签约日期"));
-  document.getElementById("rent").value = get("每月租金");
-  document.getElementById("name").value = get("姓名");
-  document.getElementById("idNumber").value = get("证件号码");
-
-  calculate();
-}
-
-function addMonths(date, m) {
-  if (!date) return "";
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + m);
-  return d.toISOString().slice(0, 10);
-}
-
-function addDays(date, d) {
-  if (!date) return "";
-  const t = new Date(date);
-  t.setDate(t.getDate() + d);
-  return t.toISOString().slice(0, 10);
-}
-
-function getMonthDiff(start, end) {
-  if (!start || !end) return 0;
-  const s = new Date(start);
-  const e = new Date(end);
-  if (isNaN(s) || isNaN(e) || e <= s) return 0;
-
-  let months = (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth());
-  if (e.getDate() > s.getDate()) months += 1;
-  return months;
-}
-
-function money(value) {
-  const n = Number(value || 0);
-  if (!n) return "";
-  return `HKD ${n.toLocaleString()}`;
-}
-
-function calculate() {
-  const checkin = document.getElementById("checkin").value;
-  const checkout = document.getElementById("checkout").value;
-  const sign = document.getElementById("signDate").value;
-  const rent = Number(document.getElementById("rent").value || 0);
-
-  if (checkin && checkout) {
-    document.getElementById("period").value = `${checkin} 至 ${checkout}`;
-  }
-
-  if (rent) {
-    document.getElementById("deposit").value = rent * 2;
-    document.getElementById("p1Rent").value = rent * 3;
-    document.getElementById("p2Rent").value = rent * 3;
-    document.getElementById("p3Rent").value = rent * 3;
-    document.getElementById("p4Rent").value = rent * 3;
-  }
-
-  if (sign) {
-    document.getElementById("depositDeadline").value = sign;
-
-    let p1 = addDays(sign, -14);
-    if (p1 < sign) {
-      p1 = addDays(sign, -3);
-    }
-
-    document.getElementById("p1Date").value = p1;
-    document.getElementById("p2Date").value = addMonths(p1, 3);
-    document.getElementById("p3Date").value = addMonths(p1, 6);
-    document.getElementById("p4Date").value = addMonths(p1, 9);
-  }
-}
-
-function setupAutoCalc() {
-  ["checkin", "checkout", "signDate", "rent"].forEach(id => {
-    document.getElementById(id).addEventListener("input", calculate);
-  });
-
-  calculate();
-}
-
-window.addEventListener("DOMContentLoaded", setupAutoCalc);
-
 async function generatePDF() {
+  let wrapper = null;
+
   try {
     calculate();
 
@@ -155,43 +45,157 @@ async function generatePDF() {
     const template = await loadTemplate();
     const html = renderTemplate(template, data);
 
+    // 关键：不要直接把合同 div append 到当前页面底部
+    // 要放进一个固定在页面左上角的独立 wrapper，避免 Safari 计算 offsetTop
+    wrapper = document.createElement("div");
+    wrapper.id = "pdf-generate-root";
+
+    wrapper.style.position = "fixed";
+    wrapper.style.left = "0";
+    wrapper.style.top = "0";
+    wrapper.style.width = "794px";
+    wrapper.style.height = "auto";
+    wrapper.style.minHeight = "0";
+    wrapper.style.margin = "0";
+    wrapper.style.padding = "0";
+    wrapper.style.background = "#ffffff";
+    wrapper.style.zIndex = "999999";
+    wrapper.style.overflow = "visible";
+    wrapper.style.transform = "none";
+    wrapper.style.boxSizing = "border-box";
+
     const div = document.createElement("div");
+    div.id = "contract-print-root";
     div.innerHTML = html;
+
+    // 关键：不要在 JS 里强行设置 minHeight:1123px
+    // 让合同内容自然高度，分页交给 html2pdf
+    div.style.display = "block";
+    div.style.position = "relative";
+    div.style.left = "0";
+    div.style.top = "0";
     div.style.width = "794px";
-    div.style.minHeight = "1123px";
-    div.style.padding = "40px";
+    div.style.height = "auto";
+    div.style.minHeight = "0";
+    div.style.margin = "0";
+    div.style.padding = "0";
     div.style.background = "#ffffff";
     div.style.color = "#000000";
-    div.style.fontFamily = "Arial, 'Noto Sans TC', 'Noto Sans SC', sans-serif";
+    div.style.fontFamily = "Arial, 'PingFang TC', 'PingFang SC', 'Noto Sans TC', 'Noto Sans SC', sans-serif";
     div.style.fontSize = "14px";
     div.style.lineHeight = "1.65";
     div.style.boxSizing = "border-box";
+    div.style.overflow = "visible";
+    div.style.transform = "none";
 
-    document.body.appendChild(div);
+    wrapper.appendChild(div);
+    document.body.appendChild(wrapper);
+
+    // 等待 Safari 完成布局
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     await html2pdf()
       .set({
-        margin: 8,
+        margin: 0,
         filename: "许可协议.pdf",
-        image: { type: "jpeg", quality: 0.98 },
+        image: {
+          type: "jpeg",
+          quality: 0.98
+        },
         html2canvas: {
           scale: 2,
           useCORS: true,
-          backgroundColor: "#ffffff"
+          backgroundColor: "#ffffff",
+
+          // 关键：强制从左上角开始截图
+          scrollX: 0,
+          scrollY: 0,
+          x: 0,
+          y: 0,
+
+          // 关键：让 html2canvas 用合同本身的高度，而不是当前页面高度
+          windowWidth: 794,
+          windowHeight: div.scrollHeight,
+
+          onclone: function (clonedDoc) {
+            const clonedHtml = clonedDoc.documentElement;
+            const clonedBody = clonedDoc.body;
+            const clonedWrapper = clonedDoc.getElementById("pdf-generate-root");
+            const clonedContract = clonedDoc.getElementById("contract-print-root");
+
+            clonedHtml.style.margin = "0";
+            clonedHtml.style.padding = "0";
+            clonedHtml.style.width = "794px";
+            clonedHtml.style.height = "auto";
+            clonedHtml.style.minHeight = "0";
+            clonedHtml.style.overflow = "visible";
+            clonedHtml.style.display = "block";
+
+            clonedBody.style.margin = "0";
+            clonedBody.style.padding = "0";
+            clonedBody.style.width = "794px";
+            clonedBody.style.height = "auto";
+            clonedBody.style.minHeight = "0";
+            clonedBody.style.overflow = "visible";
+            clonedBody.style.display = "block";
+            clonedBody.style.background = "#ffffff";
+
+            if (clonedWrapper) {
+              clonedWrapper.style.position = "absolute";
+              clonedWrapper.style.left = "0";
+              clonedWrapper.style.top = "0";
+              clonedWrapper.style.width = "794px";
+              clonedWrapper.style.height = "auto";
+              clonedWrapper.style.minHeight = "0";
+              clonedWrapper.style.margin = "0";
+              clonedWrapper.style.padding = "0";
+              clonedWrapper.style.overflow = "visible";
+              clonedWrapper.style.transform = "none";
+              clonedWrapper.style.background = "#ffffff";
+            }
+
+            if (clonedContract) {
+              clonedContract.style.position = "relative";
+              clonedContract.style.left = "0";
+              clonedContract.style.top = "0";
+              clonedContract.style.width = "794px";
+              clonedContract.style.height = "auto";
+              clonedContract.style.minHeight = "0";
+              clonedContract.style.margin = "0";
+              clonedContract.style.padding = "0";
+              clonedContract.style.overflow = "visible";
+              clonedContract.style.transform = "none";
+              clonedContract.style.background = "#ffffff";
+            }
+          }
         },
         jsPDF: {
           unit: "mm",
           format: "a4",
           orientation: "portrait"
         },
-        pagebreak: { mode: ["css", "legacy"] }
+        pagebreak: {
+          mode: ["avoid-all", "css", "legacy"],
+          avoid: [
+            "p",
+            "tr",
+            "td",
+            ".clause",
+            ".signature-table",
+            ".signature-cell"
+          ]
+        }
       })
       .from(div)
       .save();
 
-    document.body.removeChild(div);
   } catch (err) {
     console.error(err);
     alert("PDF 生成失败：" + err.message);
+  } finally {
+    if (wrapper && wrapper.parentNode) {
+      wrapper.parentNode.removeChild(wrapper);
+    }
   }
 }
