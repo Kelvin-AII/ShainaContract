@@ -327,9 +327,9 @@
       let x = 20;
 
       chars.forEach(function (char, index) {
-        const rotateList = [-10, 7, -5, 9];
-        const yList = [64, 58, 66, 60];
-        const sizeList = [54, 62, 56, 60];
+        const rotateList = [-12, 8, -7, 10];
+        const yList = [64, 58, 67, 61];
+        const sizeList = [56, 66, 58, 62];
 
         const rotate = rotateList[index % rotateList.length];
         const y = yList[index % yList.length];
@@ -340,15 +340,15 @@
             x="${x}"
             y="${y}"
             font-size="${size}"
-            transform="rotate(${rotate} ${x} ${y}) skewX(-10)"
+            transform="rotate(${rotate} ${x} ${y}) skewX(-13)"
           >${char}</text>
         `;
 
-        x += index === 0 ? 32 : 30;
+        x += index === 0 ? 31 : 29;
       });
 
       return `
-        <svg class="auto-signature auto-signature-svg" viewBox="0 0 260 95" xmlns="http://www.w3.org/2000/svg" aria-label="签名">
+        <svg class="auto-signature-svg" viewBox="0 0 260 95" xmlns="http://www.w3.org/2000/svg" aria-label="签名">
           <defs>
             <filter id="signatureRough" x="-20%" y="-20%" width="140%" height="140%">
               <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="8" result="noise"/>
@@ -375,7 +375,7 @@
     }
 
     return `
-      <svg class="auto-signature auto-signature-svg" viewBox="0 0 300 95" xmlns="http://www.w3.org/2000/svg" aria-label="签名">
+      <svg class="auto-signature-svg" viewBox="0 0 300 95" xmlns="http://www.w3.org/2000/svg" aria-label="签名">
         <defs>
           <filter id="signatureRoughText" x="-20%" y="-20%" width="140%" height="140%">
             <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="9" result="noise"/>
@@ -613,9 +613,9 @@
   }
 
   .contract {
-    width: 186mm;
-    margin: 0 auto;
-    padding: 12mm 0 14mm 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
     background: #ffffff;
     color: #000000;
     overflow: visible;
@@ -766,10 +766,36 @@
       overflow: visible !important;
     }
 
+    body::before,
+    body::after,
+    .contract::before,
+    .contract::after {
+      display: none !important;
+      content: none !important;
+      border: none !important;
+    }
+
     .contract {
       border: none !important;
       box-shadow: none !important;
       outline: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    h1,
+    .intro,
+    .meta-row,
+    .bank-info,
+    .receipt,
+    .signature-table {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .auto-signature-svg {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
   }
 </style>
@@ -795,104 +821,41 @@ ${getPDFStyle()}
 </head>
 <body>
 ${contract}
+<script>
+  window.onload = function () {
+    setTimeout(function () {
+      window.focus();
+      window.print();
+    }, 300);
+  };
+</script>
 </body>
 </html>
 `;
   }
 
-  function createPDFRoot(html) {
-    const old = document.getElementById("pdf-generate-root");
-    if (old) {
-      old.remove();
+  function openPrintWindow(html) {
+    const printWindow = window.open("", "_blank");
+
+    if (!printWindow) {
+      alert("浏览器阻止了弹出窗口，请允许弹出窗口后再点击下载 PDF。");
+      return;
     }
 
-    const root = document.createElement("div");
-    root.id = "pdf-generate-root";
-    root.style.position = "fixed";
-    root.style.left = "0";
-    root.style.top = "0";
-    root.style.width = "210mm";
-    root.style.minHeight = "297mm";
-    root.style.background = "#ffffff";
-    root.style.zIndex = "999999";
-    root.style.opacity = "0";
-    root.style.pointerEvents = "none";
-    root.style.overflow = "visible";
-
-    root.innerHTML = html;
-    document.body.appendChild(root);
-
-    return root;
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
   }
 
-  async function downloadPDF() {
+  function downloadPDF() {
     try {
-      if (typeof html2pdf === "undefined") {
-        alert("PDF 生成库加载失败，请检查网络是否可以加载 html2pdf.js。");
-        return;
-      }
-
       const html = buildContractHTML();
 
       if (!html) {
         return;
       }
 
-      const root = createPDFRoot(html);
-      const contract = root.querySelector(".contract");
-
-      if (!contract) {
-        throw new Error("找不到合同内容。");
-      }
-
-      await new Promise(resolve => requestAnimationFrame(resolve));
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      await html2pdf()
-        .set({
-          margin: 0,
-          filename: "许可协议.pdf",
-          image: {
-            type: "jpeg",
-            quality: 0.98
-          },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: "#ffffff",
-            scrollX: 0,
-            scrollY: 0,
-            windowWidth: 794,
-            windowHeight: Math.max(contract.scrollHeight, 1123)
-          },
-          jsPDF: {
-            unit: "mm",
-            format: "a4",
-            orientation: "portrait",
-            compress: true
-          },
-          pagebreak: {
-            mode: ["css", "legacy"],
-            avoid: [
-              ".meta-row",
-              ".bank-info",
-              ".receipt",
-              ".signature-table",
-              "tr",
-              "td"
-            ]
-          }
-        })
-        .from(contract)
-        .save();
-
-      setTimeout(function () {
-        const old = document.getElementById("pdf-generate-root");
-        if (old) {
-          old.remove();
-        }
-      }, 1000);
+      openPrintWindow(html);
     } catch (err) {
       console.error(err);
       alert("下载 PDF 失败：" + err.message);
