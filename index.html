@@ -3,13 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>许可协议 PDF 生成器</title>
 
-  <!-- PDF 生成库 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
-  <!-- 主逻辑 -->
-  <script defer src="main.js"></script>
+  <script defer src="main.js?v=20260518-signature-1"></script>
 
   <style>
     * {
@@ -100,26 +97,19 @@
     }
 
     .button-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
       margin-top: 16px;
     }
 
     button {
       width: 100%;
-      padding: 12px 14px;
-      font-size: 16px;
-      font-weight: 600;
+      padding: 14px;
+      font-size: 17px;
+      font-weight: 700;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       background: #111827;
       color: #ffffff;
-    }
-
-    button.secondary {
-      background: #374151;
     }
 
     button:hover {
@@ -158,10 +148,6 @@
         width: 100%;
         border-bottom: none;
       }
-
-      .button-row {
-        grid-template-columns: 1fr;
-      }
     }
   </style>
 </head>
@@ -171,8 +157,7 @@
     <h1>许可协议 PDF 生成器</h1>
 
     <p>
-      输入资料后，系统会自动识别并填入表单，再根据合同模板生成 PDF。
-      如手机 Safari 或部分浏览器阻止自动下载，请使用“稳定打印 / 保存 PDF”。
+      输入资料后，系统会自动识别并填入表单，再生成合同 PDF。签名位置会根据姓名自动生成签名样式。
     </p>
 
     <h2>智能识别输入</h2>
@@ -190,8 +175,7 @@
     <textarea id="rawInput" placeholder="请粘贴合同资料，例如：居住地址、入住日期、退房日期、签约日期、每月租金、姓名、证件号码等"></textarea>
 
     <div class="button-row">
-      <button type="button" onclick="parseInput()">自动识别并填充</button>
-      <button type="button" class="secondary" onclick="calculate()">重新计算金额 / 日期</button>
+      <button type="button" id="parseInputBtn">自动识别并填充</button>
     </div>
 
     <h2>基础信息</h2>
@@ -277,12 +261,12 @@
     </table>
 
     <div class="button-row">
-      <button type="button" onclick="generatePDF()">自动下载合同 PDF</button>
-      <button type="button" class="secondary" onclick="printContractPDF()">稳定打印 / 保存 PDF</button>
+      <button type="button" id="downloadPdfBtn">下载 PDF</button>
     </div>
 
     <div class="note">
-      建议：Chrome 桌面端优先使用“自动下载合同 PDF”。Safari、iPhone、Android 浏览器如果下载排版异常，请使用“稳定打印 / 保存 PDF”，然后在系统打印界面选择“保存为 PDF”。
+      点击“下载 PDF”后，会打开系统打印窗口。请选择“保存为 PDF”。
+      这个版本不使用 html2pdf 截图，因此不会出现下载 PDF 内容被截断、边缘错位或灰色边框线的问题。
     </div>
   </div>
 </body>
