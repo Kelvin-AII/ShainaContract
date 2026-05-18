@@ -313,13 +313,91 @@
   }
 
   function buildAutoSignature(name) {
-    const safeName = escapeHTML(name);
+    const safeName = escapeHTML(name).trim();
 
     if (!safeName) {
       return "";
     }
 
-    return `<div class="auto-signature">${safeName}</div>`;
+    const chars = Array.from(safeName);
+    const isShortChineseName = chars.length <= 4 && /[\u4e00-\u9fa5]/.test(safeName);
+
+    if (isShortChineseName) {
+      let textParts = "";
+      let x = 20;
+
+      chars.forEach(function (char, index) {
+        const rotateList = [-10, 7, -5, 9];
+        const yList = [64, 58, 66, 60];
+        const sizeList = [54, 62, 56, 60];
+
+        const rotate = rotateList[index % rotateList.length];
+        const y = yList[index % yList.length];
+        const size = sizeList[index % sizeList.length];
+
+        textParts += `
+          <text
+            x="${x}"
+            y="${y}"
+            font-size="${size}"
+            transform="rotate(${rotate} ${x} ${y}) skewX(-10)"
+          >${char}</text>
+        `;
+
+        x += index === 0 ? 32 : 30;
+      });
+
+      return `
+        <svg class="auto-signature auto-signature-svg" viewBox="0 0 260 95" xmlns="http://www.w3.org/2000/svg" aria-label="签名">
+          <defs>
+            <filter id="signatureRough" x="-20%" y="-20%" width="140%" height="140%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="8" result="noise"/>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.8" xChannelSelector="R" yChannelSelector="G"/>
+            </filter>
+          </defs>
+          <g
+            filter="url(#signatureRough)"
+            fill="#000"
+            stroke="#000"
+            stroke-width="0.35"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            font-family="'HanziPen SC','Xingkai SC','STXingkai','Kaiti SC','KaiTi','STKaiti','Brush Script MT','Segoe Script',cursive"
+            font-style="italic"
+            font-weight="400"
+          >
+            ${textParts}
+            <path d="M14 75 C70 90, 135 80, 218 88" fill="none" stroke="#000" stroke-width="2.2" opacity="0.9"/>
+            <path d="M118 78 C150 56, 180 54, 222 67" fill="none" stroke="#000" stroke-width="1.2" opacity="0.55"/>
+          </g>
+        </svg>
+      `;
+    }
+
+    return `
+      <svg class="auto-signature auto-signature-svg" viewBox="0 0 300 95" xmlns="http://www.w3.org/2000/svg" aria-label="签名">
+        <defs>
+          <filter id="signatureRoughText" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="9" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.6" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+        </defs>
+        <g
+          filter="url(#signatureRoughText)"
+          fill="#000"
+          stroke="#000"
+          stroke-width="0.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          font-family="'Brush Script MT','Segoe Script','Snell Roundhand','HanziPen SC','Xingkai SC','STXingkai','KaiTi',cursive"
+          font-style="italic"
+          font-weight="400"
+        >
+          <text x="20" y="62" font-size="44" transform="skewX(-14) rotate(-4 20 62)">${safeName}</text>
+          <path d="M18 75 C85 91, 170 80, 275 86" fill="none" stroke="#000" stroke-width="2" opacity="0.9"/>
+        </g>
+      </svg>
+    `;
   }
 
   function collectFormData() {
@@ -535,9 +613,9 @@
   }
 
   .contract {
-    width: 100%;
-    margin: 0;
-    padding: 0;
+    width: 186mm;
+    margin: 0 auto;
+    padding: 12mm 0 14mm 0;
     background: #ffffff;
     color: #000000;
     overflow: visible;
@@ -663,36 +741,18 @@
   .signature-line {
     display: block;
     margin-top: 16mm;
-    margin-bottom: 1mm;
+    margin-bottom: 0;
     border-bottom: 1px solid #000;
     height: 0;
     width: 70mm;
   }
 
-  .auto-signature {
+  .auto-signature-svg {
     display: block;
-    width: 70mm;
-    min-height: 12mm;
-    margin: 0 0 2mm 0;
-    padding-left: 4mm;
-    font-family:
-      "HanziPen SC",
-      "Xingkai SC",
-      "STXingkai",
-      "KaiTi",
-      "Kaiti SC",
-      "Brush Script MT",
-      "Segoe Script",
-      cursive;
-    font-size: 24pt;
-    font-style: italic;
-    font-weight: 400;
-    line-height: 1.1;
-    letter-spacing: 1px;
-    color: #000000;
-    transform: rotate(-3deg);
-    transform-origin: left center;
-    white-space: nowrap;
+    width: 72mm;
+    height: 24mm;
+    margin: -8mm 0 -2mm -2mm;
+    overflow: visible;
   }
 
   @media print {
@@ -706,36 +766,10 @@
       overflow: visible !important;
     }
 
-    body::before,
-    body::after,
-    .contract::before,
-    .contract::after {
-      display: none !important;
-      content: none !important;
-      border: none !important;
-    }
-
     .contract {
       border: none !important;
       box-shadow: none !important;
       outline: none !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-
-    h1,
-    .intro,
-    .meta-row,
-    .bank-info,
-    .receipt,
-    .signature-table {
-      page-break-inside: avoid;
-      break-inside: avoid;
-    }
-
-    .auto-signature {
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
     }
   }
 </style>
@@ -766,41 +800,99 @@ ${contract}
 `;
   }
 
-  function openPrintWindow(html) {
-    const printWindow = window.open("", "_blank");
-
-    if (!printWindow) {
-      alert("浏览器阻止了弹出窗口，请允许弹出窗口后再点击下载 PDF。");
-      return;
+  function createPDFRoot(html) {
+    const old = document.getElementById("pdf-generate-root");
+    if (old) {
+      old.remove();
     }
 
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
+    const root = document.createElement("div");
+    root.id = "pdf-generate-root";
+    root.style.position = "fixed";
+    root.style.left = "0";
+    root.style.top = "0";
+    root.style.width = "210mm";
+    root.style.minHeight = "297mm";
+    root.style.background = "#ffffff";
+    root.style.zIndex = "999999";
+    root.style.opacity = "0";
+    root.style.pointerEvents = "none";
+    root.style.overflow = "visible";
 
-    const triggerPrint = function () {
-      setTimeout(function () {
-        printWindow.focus();
-        printWindow.print();
-      }, 500);
-    };
+    root.innerHTML = html;
+    document.body.appendChild(root);
 
-    if (printWindow.document.readyState === "complete") {
-      triggerPrint();
-    } else {
-      printWindow.onload = triggerPrint;
-    }
+    return root;
   }
 
-  function downloadPDF() {
+  async function downloadPDF() {
     try {
+      if (typeof html2pdf === "undefined") {
+        alert("PDF 生成库加载失败，请检查网络是否可以加载 html2pdf.js。");
+        return;
+      }
+
       const html = buildContractHTML();
 
       if (!html) {
         return;
       }
 
-      openPrintWindow(html);
+      const root = createPDFRoot(html);
+      const contract = root.querySelector(".contract");
+
+      if (!contract) {
+        throw new Error("找不到合同内容。");
+      }
+
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      await html2pdf()
+        .set({
+          margin: 0,
+          filename: "许可协议.pdf",
+          image: {
+            type: "jpeg",
+            quality: 0.98
+          },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#ffffff",
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: 794,
+            windowHeight: Math.max(contract.scrollHeight, 1123)
+          },
+          jsPDF: {
+            unit: "mm",
+            format: "a4",
+            orientation: "portrait",
+            compress: true
+          },
+          pagebreak: {
+            mode: ["css", "legacy"],
+            avoid: [
+              ".meta-row",
+              ".bank-info",
+              ".receipt",
+              ".signature-table",
+              "tr",
+              "td"
+            ]
+          }
+        })
+        .from(contract)
+        .save();
+
+      setTimeout(function () {
+        const old = document.getElementById("pdf-generate-root");
+        if (old) {
+          old.remove();
+        }
+      }, 1000);
     } catch (err) {
       console.error(err);
       alert("下载 PDF 失败：" + err.message);
